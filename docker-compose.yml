@@ -56,7 +56,7 @@ services:
     depends_on:
       - scraper
       - postgres
-      - kafka
+      - kafka-cluster
 
   scraper:
     build:
@@ -77,4 +77,4 @@ services:
       - 6004:6004
     depends_on:
       - postgres
-      - kafka
+      - kafka-cluster
