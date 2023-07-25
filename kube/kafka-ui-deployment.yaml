@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: /snap/kompose/19/kompose-linux-amd64 convert -f docker-compose.yml
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: kafka-ui
+  name: kafka-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: kafka-ui
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: /snap/kompose/19/kompose-linux-amd64 convert -f docker-compose.yml
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: kafka-ui
+    spec:
+      containers:
+      - env:
+        - name: DYNAMIC_CONFIG_ENABLED
+          value: "true"
+        - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
+          value: kafka:9092
+        - name: KAFKA_CLUSTERS_0_NAME
+          value: local
+        image: provectuslabs/kafka-ui:latest
+        imagePullPolicy: ""
+        name: kafka-ui
+        ports:
+        - containerPort: 8080
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}

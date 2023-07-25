@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: /snap/kompose/19/kompose-linux-amd64 convert -f docker-compose.yml
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: postgres
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: postgres
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: /snap/kompose/19/kompose-linux-amd64 convert -f docker-compose.yml
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: postgres
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_PASSWORD
+          value: supersecret
+        - name: POSTGRES_USER
+          value: scraper
+        image: postgres:latest
+        imagePullPolicy: ""
+        name: postgres
+        ports:
+        - containerPort: 5432
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-claim0
+        - mountPath: /docker-entrypoint-initdb.d
+          name: postgres-claim1
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: postgres-claim0
+        persistentVolumeClaim:
+          claimName: postgres-claim0
+      - name: postgres-claim1
+        persistentVolumeClaim:
+          claimName: postgres-claim1
+status: {}

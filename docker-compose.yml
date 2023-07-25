@@ -1,0 +1,80 @@
+version: "3"
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: scraper
+      POSTGRES_PASSWORD: supersecret
+    volumes:
+      - ./postgres/dbdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    ports:
+      - 6003:5432
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper-container
+    ports:
+      - "2181:2181"
+
+  kafka-cluster:
+    image: wurstmeister/kafka
+    container_name: kafka-container
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 5000:8080
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - DYNAMIC_CONFIG_ENABLED=true
+
+  scraper-gateway:
+    build:
+      context: ../scraper-gateway
+      dockerfile: ./deploy/dockerfile
+    restart: unless-stopped
+    container_name: scraper-gateway
+    hostname: scraper-gateway
+    volumes:
+      - ../scraper-gateway:/scraper-gateway
+    ports:
+      - 4000:4000
+    depends_on:
+      - scraper
+      - postgres
+      - kafka
+
+  scraper:
+    build:
+      context: ../scraper
+      dockerfile: ./deploy/dockerfile
+    restart: unless-stopped
+    container_name: scraper
+    hostname: scraper
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USERNAME=scraper
+      - DATABASE_PASSWORD=supersecret
+      - DATABASE_NAME=scraper_db
+    volumes:
+      - ../scraper:/scraper
+    ports:
+      - 6004:6004
+    depends_on:
+      - postgres
+      - kafka
